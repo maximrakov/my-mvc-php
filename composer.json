@@ -1,0 +1,15 @@
+{
+    "name": "maximrakov/my-mvc-php",
+    "autoload": {
+        "psr-4": {
+            "app\\": "./"
+        }
+    },
+    "authors": [
+        {
+            "name": "maximrakov",
+            "email": "maximrakov2210@mail.ru"
+        }
+    ],
+    "require": {}
+}
