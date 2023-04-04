@@ -20,18 +20,18 @@ class Router {
 
     public function findCallback($path, $method) {
         foreach ($this->routes[$method] as $urlPattern => $callback) {
-            $cur_url = $urlPattern;
+            $currentUrlPattern = $urlPattern;
             $argumentNames = [];
-            while(strpos($cur_url, '{')) {
-                $openedCurlyBraceIndex = strpos($cur_url, '{');
-                $closedCurlyBraceIndex = strpos($cur_url, '}');
+            while(strpos($currentUrlPattern, '{')) {
+                $openedCurlyBraceIndex = strpos($currentUrlPattern, '{');
+                $closedCurlyBraceIndex = strpos($currentUrlPattern, '}');
                 $argLength = $closedCurlyBraceIndex - $openedCurlyBraceIndex + 1;
-                $curArgument = substr($cur_url, $openedCurlyBraceIndex + 1, $argLength - 2);
-                $urlBlockNumber = substr_count($cur_url, '/', 0, $closedCurlyBraceIndex + 1);
-                array_push($argumentNames, [$curArgument, $urlBlockNumber]);
-                $cur_url = substr_replace($cur_url,"\\w+", $openedCurlyBraceIndex, $argLength);
+                $curArgumentName = substr($currentUrlPattern, $openedCurlyBraceIndex + 1, $argLength - 2);
+                $urlBlockNumber = substr_count($currentUrlPattern, '/', 0, $closedCurlyBraceIndex + 1);
+                array_push($argumentNames, [$curArgumentName, $urlBlockNumber]);
+                $currentUrlPattern = substr_replace($currentUrlPattern,"\\w+", $openedCurlyBraceIndex, $argLength);
             }
-            if(preg_match($cur_url, $path)) {
+            if(preg_match($currentUrlPattern, $path)) {
                 $curIndex = 0;
                 for($i = 0; $i < strlen($path); $i++) {
                     $urlBlockNumber = substr_count($path, '/', 0, $i + 1);
