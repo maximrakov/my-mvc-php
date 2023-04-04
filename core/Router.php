@@ -34,6 +34,9 @@ class Router {
             if(preg_match($currentUrlPattern, $path)) {
                 $curIndex = 0;
                 for($i = 0; $i < strlen($path); $i++) {
+                    if($curIndex >= count($argumentNames)){
+                        break;
+                    }
                     $urlBlockNumber = substr_count($path, '/', 0, $i + 1);
                     if($argumentNames[$curIndex][1] == $urlBlockNumber) {
                         $curSubstr = substr($path, $i + 1);
@@ -49,6 +52,7 @@ class Router {
                 return [$callback, $args];
             }
         }
+        return [];
     }
 
     public function resolve() {
@@ -56,7 +60,9 @@ class Router {
         $method = $this->request->getMethod();
 
         $callback = $this->findCallback($path, $method);
-
+        if(count($callback) == 0) {
+            http_response_code(404);
+        }
         if (is_array($callback[0])) {
             $callback[0][0] = new $callback[0][0];
         }
