@@ -5,6 +5,7 @@ use app\core\Application;
 use app\controllers\Controller;
 
 $app = new Application();
-$app->router->get('/abaca/{index}/{diwjef}/wefowkefo', [Controller::class, 'index']);
-
+$app->router->get('/{id}\/aba/', [Controller::class, 'index']);
+$app->router->get('/caba\/ca.a/', [Controller::class, 'show']);
 $app->run();
+

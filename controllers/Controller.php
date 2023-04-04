@@ -4,7 +4,11 @@ namespace app\controllers;
 
 class Controller
 {
-    public function index() {
-        return "abacaba";
+    public function index($id) {
+        return $id;
+    }
+
+    public function show() {
+        return "yes";
     }
 }
