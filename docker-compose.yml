@@ -1,13 +1,13 @@
-version: '3.8'
+version: '3'
 services:
   main:
     build:
       context: .
       dockerfile: Dockerfile
-    command: 'sh deploy.sh'
+    command: 'php -S 0.0.0.0:80 -t public'
     volumes:
       - .:/app
     environment:
       PMA_HOST: host.docker.internal
     ports:
-      - 2001:2001
+      - "8000:80"
