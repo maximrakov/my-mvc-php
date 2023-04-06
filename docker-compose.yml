@@ -1,0 +1,13 @@
+version: '3.8'
+services:
+  main:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: 'sh deploy.sh'
+    volumes:
+      - .:/app
+    environment:
+      PMA_HOST: host.docker.internal
+    ports:
+      - 2001:2001
