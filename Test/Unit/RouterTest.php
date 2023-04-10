@@ -13,10 +13,10 @@ class RouterTest extends TestCase
     {
         $request = new Request();
         $router = new Router($request);
-        $router->get('/{id}\/aba/', [Controller::class, 'index']);
-        $router->get('/[dfs][jkl]\/Test/', [Controller::class, 'show']);
+        $router->get('/^\/{id}\/aba$/', [Controller::class, 'index']);
+        $router->get('/^\/[dfs][jkl]\/test$/', [Controller::class, 'show']);
         $this->assertEquals($router->findCallback('/123/aba', 'GET'), [[Controller::class, 'index'], [123]]);
-        $this->assertEquals($router->findCallback('/fl/Test', 'GET'), [[Controller::class, 'show'], []]);
-        $this->assertEquals($router->findCallback('/abacabadaba/Test', 'GET'), []);
+        $this->assertEquals($router->findCallback('/fl/test', 'GET'), [[Controller::class, 'show'], []]);
+        $this->assertEquals($router->findCallback('/abacabadaba/test', 'GET'), []);
     }
 }

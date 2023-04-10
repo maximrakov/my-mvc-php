@@ -12,14 +12,28 @@ class Router
         $this->request = $request;
     }
 
-    public function get($path, $callback)
+    public function get($path, $callback): void
     {
-        $this->routes['GET'][$path] = $callback;
+        $handledPathAndUrlArgs = $this->handlePatternArguments($path);
+        $this->routes['GET'][$handledPathAndUrlArgs[0]] = [$callback, $handledPathAndUrlArgs[1]];
+    }
+
+    public function handlePatternArguments($path): array
+    {
+        preg_match_all('/\{(\w+)\}/', $path, $urlArguments); // находим url аргументы
+        $blockNumbers = [];
+        foreach ($urlArguments[0] as $urlArgument) { // проходимся по url аргументам
+            $argPosition = strpos($path, $urlArgument); // ищем индекс вхождения первого аргумента
+            $blockNumbers[] = substr_count($path, '/', 0, $argPosition) - 1; // добавляем номер url-блока в котором находится текущий url - аргумент
+            $path = str_replace($urlArgument, '\w+', $path); // заменяем url-аргмента на w+ для валидной регулярки
+        }
+        return [$path, $blockNumbers];
     }
 
     public function post($path, $callback)
     {
-        $this->routes['POST'][$path] = $callback;
+        $handeledPathAndUrlArgs = $this->handlePatternArguments($path);
+        $this->routes['POST'][$handeledPathAndUrlArgs[0]] = [$callback, $handeledPathAndUrlArgs[1]];
     }
 
     public function resolve()
@@ -37,54 +51,16 @@ class Router
         echo call_user_func_array($callback[0], $callback[1]); // вызываем метод с аргументами
     }
 
-    private function findUrlArguments(int|string $currentUrlPattern): array
+    public function findCallback($path, $method)
     {
-        $argumentInfo = [];
-        while (strpos($currentUrlPattern, '{')) {
-            $openedCurlyBraceIndex = strpos($currentUrlPattern, '{');
-            $closedCurlyBraceIndex = strpos($currentUrlPattern, '}'); // находим индексы аргумента
-
-            $currentFunctionArgumentLength = $closedCurlyBraceIndex - $openedCurlyBraceIndex + 1; // вычисляем длину аргумента
-
-            $currentFunctionArgumentName = substr($currentUrlPattern,
-                $openedCurlyBraceIndex + 1, $currentFunctionArgumentLength - 2); // находим имя аргумента
-
-            $urlBlockNumber = substr_count($currentUrlPattern, '/',
-                0, $closedCurlyBraceIndex + 1); // вычсляем url блок в котором находтся аргумента
-
-            $argumentInfo[] = [$currentFunctionArgumentName, $urlBlockNumber]; // добавляем имя аргумента и номер блока в массив
-
-            $currentUrlPattern = substr_replace($currentUrlPattern, "\\w+",
-                $openedCurlyBraceIndex, $currentFunctionArgumentLength); // заменяем все url-аргументы на регулярное выражение
-        }
-        return [$currentUrlPattern, $argumentInfo]; // возвращаем обработаную регулярку и данные об аргументах
-    }
-
-    public function findCallback($path, $method): array
-    {
-        foreach ($this->routes[$method] as $currentUrlPattern => $callback) { // проходимся по всем паттернам
-            $handledUrl = $this->findUrlArguments($currentUrlPattern); // находим все url-аргументы и заменяем их на формат регулярного выражения
-            $currentUrlPattern = $handledUrl[0]; // обработаная регулярка
-            $argumentInfo = $handledUrl[1]; // информация об аргументах
-            if (preg_match($currentUrlPattern, $path)) { // подходит ли url под текущюю регулярку
-                $curArgumentNumber = 0; // номер текущего аргумента
-                for ($i = 0; $i < strlen($path); $i++) {
-                    if ($curArgumentNumber >= count($argumentInfo)) { // если обработали все аргументы выходим
-                        break;
-                    }
-                    $urlBlockNumber = substr_count($path, '/', 0, $i + 1); // считаем номер текущего блока
-                    if ($argumentInfo[$curArgumentNumber][1] == $urlBlockNumber) { // если мы находимся в блоке нашего текущего аргумента
-                        $curSubstr = substr($path, $i + 1);
-                        $curSubstr = substr($curSubstr, 0, strpos($curSubstr, '/'));
-                        $argumentInfo[$curArgumentNumber][] = $curSubstr; // добавляем значение этого блока, оно будет значением текущего аргумента
-                        $curArgumentNumber++; // переходим к следующему аргументу
-                    }
-                }
+        foreach ($this->routes[$method] as $pattern => $callbackAndArgs) { // проходимся по url-паттернам
+            if (preg_match($pattern, $path)) { // смотрим матчится ли текущий паттерн с url-путем
+                $urlBlocks = explode('/', $path); // разбиваем url на url-блоки
                 $args = [];
-                foreach ($argumentInfo as $argInfo) { // заполняем массив значениями аргументов
-                    $args[] = $argInfo[2];
+                foreach ($callbackAndArgs[1] as $urlBlockNumber) {
+                    $args[] = $urlBlocks[$urlBlockNumber]; // добавляем значение url-аргумента
                 }
-                return [$callback, $args]; // возвращаем искомый колбэк и аргументы к нему
+                return [$callbackAndArgs[0], $args];
             }
         }
         return [];
