@@ -14,16 +14,17 @@ class Router
 
     public function get($path, $callback): void
     {
-        $this->routes['GET'][] = [
-            'url' => $this->request->normalizeUrl($path),
-            'class' => $callback[0],
-            'method' => $callback[1],
-        ];
+        $this->addRoute('GET', $path, $callback);
     }
 
-    public function post($path, $callback)
+    public function post($path, $callback): void
     {
-        $this->routes['POST'][] = [
+        $this->addRoute('POST', $path, $callback);
+    }
+
+    private function addRoute($method, $path, $callback): void
+    {
+        $this->routes[$method][] = [
             'url' => $this->request->normalizeUrl($path),
             'class' => $callback[0],
             'method' => $callback[1],
