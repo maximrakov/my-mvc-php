@@ -30,17 +30,14 @@ class Router
         ];
     }
 
-    public function resolve(): bool
+    public function resolve(): int|bool
     {
         $path = $this->request->getPath(); // получаем путь текущего реквеста
         $method = $this->request->getMethod(); // получаем метод текущего реквеста
-
         foreach($this->routes[$method] as $route) {
             $url = $this->replacePatterns($route['url']);
-
-            if($params = $this->matchUrl($url, $path)) {
-               $this->call($route, $params);
-               return true;
+            if(($params = $this->matchUrl($url, $path))) {
+                echo $this->call($route, $params);
             }
         }
 
@@ -54,17 +51,20 @@ class Router
 
     private function matchUrl(string $currentUrl, string $url): array|null
     {
-        preg_match('#^' . $currentUrl . '$#', $url, $matches);
+        preg_match($currentUrl,  $url, $matches);
         if(!empty($matches)) {
             unset($matches[0]);
+            if(!$matches) {
+                $matches[] = null;
+            }
             return $matches;
         }
 
         return null;
     }
 
-    private function call(mixed $route, mixed $params): void
+    private function call(mixed $route, mixed $params): string
     {
-        call_user_func_array([new $route['class'], $route['method']], $params);
+        return call_user_func_array([new $route['class'], $route['method']], $params);
     }
 }

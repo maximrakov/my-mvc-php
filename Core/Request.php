@@ -16,6 +16,6 @@ class Request
 
     public function normalizeUrl(string|null $url)
     {
-        return preg_replace('#^(/?)(.*?)(/?)$#', '/$2', $url);
+        return preg_replace('#^(\#\^/?)(.*?)(/?)$#', '#^/$2', $url);
     }
 }
