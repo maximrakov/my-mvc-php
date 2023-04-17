@@ -11,6 +11,7 @@ class Request
 
     public function getMethod() // получаем тип метода реквеста GET или POST
     {
+//        print_r($_SERVER);
         return $_SERVER['REQUEST_METHOD'];
     }
 

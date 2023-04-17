@@ -12,22 +12,23 @@ class Router
         $this->request = $request;
     }
 
-    public function get($path, $callback): void
+    public function get($path, $callback, ...$middleware): void
     {
-        $this->addRoute('GET', $path, $callback);
+        $this->addRoute('GET', $path, $callback, $middleware);
     }
 
-    public function post($path, $callback): void
+    public function post($path, $callback, ...$middleware): void
     {
-        $this->addRoute('POST', $path, $callback);
+        $this->addRoute('POST', $path, $callback, $middleware);
     }
 
-    private function addRoute($method, $path, $callback): void
+    private function addRoute($method, $path, $callback, $middleware): void
     {
         $this->routes[$method][] = [
             'url' => $this->request->normalizeUrl($path),
             'class' => $callback[0],
             'method' => $callback[1],
+            'middleware'=> $middleware,
         ];
     }
 
@@ -38,6 +39,9 @@ class Router
         foreach($this->routes[$method] as $route) {
             $url = $this->replacePatterns($route['url']);
             if(($params = $this->matchUrl($url, $path))) {
+                foreach ($route['middleware'] as $middleware) {
+                    call_user_func([new $middleware, 'handle']);
+                }
                 echo $this->call($route, $params);
             }
         }
