@@ -2,15 +2,18 @@
 
 namespace App\Core\middlewares;
 
+use App\Core\Request;
+use App\Core\Response;
+
 class CORSMiddleware implements Middleware
 {
-
     private $allowedHosts = [];
-    public function handle()
+    public function handle(Request $request, Response $response)
     {
-        $hostRequest = $_SERVER['REMOTE_ADDR'] + $_SERVER['REMOTE_PORT'];
-        if(!in_array($hostRequest, $this->allowedHosts)) {
-            return http_response_code(403);
+        $requestHost = $_SERVER['REMOTE_ADDR'] . $_SERVER['REMOTE_PORT'];
+        if(!in_array($requestHost, $this->allowedHosts)) {
+            $response->setStatusCode(403);
+            return false;
         }
     }
 }

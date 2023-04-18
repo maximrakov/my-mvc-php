@@ -5,11 +5,13 @@ namespace App\Core;
 class Router
 {
     public Request $request;
+    public Response $response;
     protected array $routes = [];
 
-    public function __construct(Request $request)
+    public function __construct(Request $request, Response $response)
     {
         $this->request = $request;
+        $this->response = $response;
     }
 
     public function get($path, $callback, ...$middleware): void
@@ -32,23 +34,31 @@ class Router
         ];
     }
 
-    public function resolve(): int|bool
+    public function resolve(): void
     {
         $path = $this->request->getPath(); // получаем путь текущего реквеста
         $method = $this->request->getMethod(); // получаем метод текущего реквеста
+
         foreach($this->routes[$method] as $route) {
             $url = $this->replacePatterns($route['url']);
             if(($params = $this->matchUrl($url, $path))) {
-                foreach ($route['middleware'] as $middleware) {
-                    call_user_func([new $middleware, 'handle']);
+                if(!$this->callMiddlewares($route['middleware'])) {
+                    return;
                 }
                 echo $this->call($route, $params);
+                return;
             }
         }
-
-        return http_response_code(404);
+        $this->response->setStatusCode(404);
    }
 
+   public function callMiddlewares($middlewares) {
+       foreach ($middlewares as $middleware) {
+           if(!call_user_func([new $middleware, 'handle'], $this->request, $this->response)) {
+               return false;
+           }
+       }
+   }
     private function replacePatterns(mixed $url): string
     {
         return preg_replace('/{.+?}/', '(.+?)', $url);
