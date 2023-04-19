@@ -4,13 +4,11 @@ namespace App\Controllers;
 
 class Controller
 {
-    public function index($id)
+    public function view($view, $parameters)
     {
-        return $id;
-    }
-
-    public function show()
-    {
-        return "yes";
+        foreach ($parameters as $key => $value) {
+            $$key = $value;
+        }
+        include_once "../views/$view.php";
     }
 }
