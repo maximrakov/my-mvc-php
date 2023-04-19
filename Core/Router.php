@@ -2,6 +2,8 @@
 
 namespace App\Core;
 
+use App\Core\middlewares\CORSMiddleware;
+
 class Router
 {
     public Request $request;
@@ -14,35 +16,15 @@ class Router
         $this->response = $response;
     }
 
-    public function get($path, $callback, ...$middleware): void
-    {
-        $this->addRoute('GET', $path, $callback, $middleware);
-    }
-
-    public function post($path, $callback, ...$middleware): void
-    {
-        $this->addRoute('POST', $path, $callback, $middleware);
-    }
-
-    private function addRoute($method, $path, $callback, $middleware): void
-    {
-        $this->routes[$method][] = [
-            'url' => $this->request->normalizeUrl($path),
-            'class' => $callback[0],
-            'method' => $callback[1],
-            'middleware'=> $middleware,
-        ];
-    }
-
     public function resolve(): void
     {
-        $path = $this->request->getPath(); // получаем путь текущего реквеста
-        $method = $this->request->getMethod(); // получаем метод текущего реквеста
-
-        foreach($this->routes[$method] as $route) {
+        $path = $this->request->getPath();
+        $method = $this->request->getMethod();
+        $routes = Route::getRoutes();
+        foreach ($routes[$method] as $route) {
             $url = $this->replacePatterns($route['url']);
-            if(($params = $this->matchUrl($url, $path))) {
-                if(!$this->callMiddlewares($route['middleware'])) {
+            if (($params = $this->matchUrl($url, $path))) {
+                if (!$this->callMiddlewares($route['middlewares'])) {
                     return;
                 }
                 echo $this->call($route, $params);
@@ -50,15 +32,18 @@ class Router
             }
         }
         $this->response->setStatusCode(404);
-   }
+    }
 
-   public function callMiddlewares($middlewares) {
-       foreach ($middlewares as $middleware) {
-           if(!call_user_func([new $middleware, 'handle'], $this->request, $this->response)) {
-               return false;
-           }
-       }
-   }
+    public function callMiddlewares($middlewares)
+    {
+        foreach ($middlewares as $middleware) {
+            if (!call_user_func([new $middleware, 'handle'], $this->request, $this->response)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     private function replacePatterns(mixed $url): string
     {
         return preg_replace('/{.+?}/', '(.+?)', $url);
@@ -66,10 +51,10 @@ class Router
 
     private function matchUrl(string $currentUrl, string $url): array|null
     {
-        preg_match($currentUrl,  $url, $matches);
-        if(!empty($matches)) {
+        preg_match($currentUrl, $url, $matches);
+        if (!empty($matches)) {
             unset($matches[0]);
-            if(!$matches) {
+            if (!$matches) {
                 $matches[] = null;
             }
             return $matches;
