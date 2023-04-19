@@ -22,7 +22,7 @@ class Route
             'url' => Request::normalizeUrl($path),
             'class' => $callback[0],
             'method' => $callback[1],
-            'middlewares' => $middlewares,
+            'Middlewares' => $middlewares,
         ];
     }
 

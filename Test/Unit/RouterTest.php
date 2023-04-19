@@ -2,7 +2,7 @@
 
 namespace App\Test\Unit;
 
-use App\Controllers\Controller;
+use App\Controllers\SimpleController;
 use App\Core\Request;
 use App\Core\Router;
 use PHPUnit\Framework\TestCase;
@@ -13,10 +13,10 @@ class RouterTest extends TestCase
     {
         $request = new Request();
         $router = new Router($request);
-        $router->get('/^\/{id}\/aba$/', [Controller::class, 'index']);
-        $router->get('/^\/[dfs][jkl]\/test$/', [Controller::class, 'show']);
-        $this->assertEquals($router->findCallback('/123/aba', 'GET'), [[Controller::class, 'index'], [123]]);
-        $this->assertEquals($router->findCallback('/fl/test', 'GET'), [[Controller::class, 'show'], []]);
+        $router->get('/^\/{id}\/aba$/', [SimpleController::class, 'index']);
+        $router->get('/^\/[dfs][jkl]\/test$/', [SimpleController::class, 'show']);
+        $this->assertEquals($router->findCallback('/123/aba', 'GET'), [[SimpleController::class, 'index'], [123]]);
+        $this->assertEquals($router->findCallback('/fl/test', 'GET'), [[SimpleController::class, 'show'], []]);
         $this->assertEquals($router->findCallback('/abacabadaba/test', 'GET'), []);
     }
 

@@ -2,7 +2,7 @@
 
 namespace App\Core;
 
-use App\Core\middlewares\CORSMiddleware;
+use App\Core\Middlewares\CORSMiddleware;
 
 class Router
 {
@@ -24,7 +24,7 @@ class Router
         foreach ($routes[$method] as $route) {
             $url = $this->replacePatterns($route['url']);
             if (($params = $this->matchUrl($url, $path))) {
-                if (!$this->callMiddlewares($route['middlewares'])) {
+                if (!$this->callMiddlewares($route['Middlewares'])) {
                     return;
                 }
                 echo $this->call($route, $params);
