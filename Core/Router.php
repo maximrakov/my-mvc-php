@@ -23,18 +23,18 @@ class Router
         $routes = Route::getRoutes();
         foreach ($routes[$method] as $route) {
             $url = $this->replacePatterns($route['url']);
-            if (($params = $this->matchUrl($url, $path))) {
-                if (!$this->callMiddlewares($route['Middlewares'])) {
+            if (preg_match($this->addPregBorders($url), $path)) {
+                if (!$this->callMiddlewares($route['middlewares'])) {
                     return;
                 }
-                echo $this->call($route, $params);
+                echo $this->call($route, $this->findParameters($url, $path));
                 return;
             }
         }
         $this->response->setStatusCode(404);
     }
 
-    public function callMiddlewares($middlewares)
+    public function callMiddlewares($middlewares): bool
     {
         foreach ($middlewares as $middleware) {
             if (!call_user_func([new $middleware, 'handle'], $this->request, $this->response)) {
@@ -49,22 +49,20 @@ class Router
         return preg_replace('/{.+?}/', '(.+?)', $url);
     }
 
-    private function matchUrl(string $currentUrl, string $url): array|null
+    private function findParameters(string $currentUrl, string $url): array
     {
-        preg_match($currentUrl, $url, $matches);
-        if (!empty($matches)) {
-            unset($matches[0]);
-            if (!$matches) {
-                $matches[] = null;
-            }
-            return $matches;
-        }
-
-        return null;
+        preg_match($this->addPregBorders($currentUrl), $url, $matches);
+        unset($matches[0]);
+        return $matches;
     }
 
-    private function call(mixed $route, mixed $params): string
+    private function call(mixed $route, array $params): string
     {
         return call_user_func_array([new $route['class'], $route['method']], $params);
+    }
+
+    private function addPregBorders(string $pattern): string
+    {
+        return '#^' . $pattern . '$#';
     }
 }

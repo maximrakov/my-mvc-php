@@ -22,6 +22,6 @@ class RouterTest extends TestCase
 
     public function test_feature(){
         $request = new Request();
-        echo $request->normalizeUrl('abacaba/abaca/{dd}/{bb}/aba/?afa=fdd/');
+        echo $request->normalizeUrl('/abacaba/abaca/{dd}/{bb}/aba/?afa=fdd/');
     }
 }
