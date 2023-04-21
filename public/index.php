@@ -1,7 +1,7 @@
 <?php
 
 use App\Core\Application;
-use App\Core\middlewares\CORSMiddleware;
+use App\Core\middlewares\TrustedHostsMiddleware;
 use App\Core\Route;
 
 require_once __DIR__ . '/../vendor/autoload.php';

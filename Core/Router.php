@@ -2,7 +2,7 @@
 
 namespace App\Core;
 
-use App\Core\Middlewares\CORSMiddleware;
+use App\Core\Middlewares\TrustedHostsMiddleware;
 
 class Router
 {
@@ -36,6 +36,7 @@ class Router
 
     public function callMiddlewares($middlewares): bool
     {
+        $this->request = Kernel::runGlobalMiddlewares($this->request, $this->response);
         foreach ($middlewares as $middleware) {
             if (!call_user_func([new $middleware, 'handle'], $this->request, $this->response)) {
                 return false;
