@@ -6,12 +6,13 @@ function dd()
     die();
 }
 function env($key, $default = '') {
-    $env = file_get_contents('.env');
+
+    $env = file_get_contents(__DIR__ . '/.env');
     $patternForEnvRecord = "/$key=(.*)/";
     preg_match_all($patternForEnvRecord, $env, $values);
     if(empty($values)) {
         return $default;
     } else {
-        return $values[1];
+        return $values[1][0];
     }
 }

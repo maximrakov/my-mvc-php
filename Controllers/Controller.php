@@ -2,6 +2,8 @@
 
 namespace App\Controllers;
 
+use App\Core\Database\DB;
+
 class Controller
 {
     public function view($view, $parameters)
