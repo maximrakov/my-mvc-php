@@ -30,7 +30,6 @@ class DB
     public static function insert($sql, $params = []): void
     {
         $statement = static::execute($sql, $params);
-        $statement->execute($params);
     }
 
     public static function update($sql, $params = [])
@@ -50,7 +49,17 @@ class DB
         $statement = static::execute($sql, $params);
     }
 
-    private static function execute($sql, $params)
+    public static function getFields($tableName) {
+        $statement = static::execute("SHOW COLUMNS FROM my_db.$tableName");
+        $fieldInfo = $statement->fetchAll(PDO::FETCH_ASSOC);
+        $fieldNames = [];
+        foreach ($fieldInfo as $value) {
+            $fieldNames[] = $value['Field'];
+        }
+        return $fieldNames;
+    }
+
+    private static function execute($sql, $params = [])
     {
         if(!static::$link) {
             static::initConnection();
@@ -59,4 +68,5 @@ class DB
         $statement->execute($params);
         return $statement;
     }
+
 }

@@ -3,13 +3,12 @@
 namespace App\Controllers;
 
 use App\Core\Database\DB;
+use App\Core\Database\User;
 
 class SimpleController extends Controller
 {
     public function index($param)
     {
-        print_r(DB::delete('delete from users where name=?', ['artem']));
-        $this->view('home', ['name' => $param]);
         return $param;
     }
 
