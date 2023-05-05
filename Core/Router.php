@@ -2,70 +2,68 @@
 
 namespace App\Core;
 
+use App\Core\Middlewares\TrustedHostsMiddleware;
+
 class Router
 {
     public Request $request;
+    public Response $response;
     protected array $routes = [];
 
-    public function __construct(Request $request)
+    public function __construct(Request $request, Response $response)
     {
         $this->request = $request;
+        $this->response = $response;
     }
 
-    public function get($path, $callback): void
+    public function resolve(): void
     {
-        $this->addRoute('GET', $path, $callback);
-    }
-
-    public function post($path, $callback): void
-    {
-        $this->addRoute('POST', $path, $callback);
-    }
-
-    private function addRoute($method, $path, $callback): void
-    {
-        $this->routes[$method][] = [
-            'url' => $this->request->normalizeUrl($path),
-            'class' => $callback[0],
-            'method' => $callback[1],
-        ];
-    }
-
-    public function resolve(): int|bool
-    {
-        $path = $this->request->getPath(); // получаем путь текущего реквеста
-        $method = $this->request->getMethod(); // получаем метод текущего реквеста
-        foreach($this->routes[$method] as $route) {
+        $path = $this->request->getPath();
+        $method = $this->request->getMethod();
+        $routes = Route::getRoutes();
+        foreach ($routes[$method] as $route) {
             $url = $this->replacePatterns($route['url']);
-            if(($params = $this->matchUrl($url, $path))) {
-                echo $this->call($route, $params);
+            if (preg_match($this->addPregBorders($url), $path)) {
+                if (!$this->callMiddlewares($route['middlewares'])) {
+                    return;
+                }
+                echo $this->call($route, $this->findParameters($url, $path));
+                return;
             }
         }
+        $this->response->setStatusCode(404);
+    }
 
-        return http_response_code(404);
-   }
+    public function callMiddlewares($middlewares): bool
+    {
+        $this->request = Kernel::runGlobalMiddlewares($this->request, $this->response);
+        foreach ($middlewares as $middleware) {
+            if (!call_user_func([new $middleware, 'handle'], $this->request, $this->response)) {
+                return false;
+            }
+        }
+        return true;
+    }
 
     private function replacePatterns(mixed $url): string
     {
         return preg_replace('/{.+?}/', '(.+?)', $url);
     }
 
-    private function matchUrl(string $currentUrl, string $url): array|null
+    private function findParameters(string $currentUrl, string $url): array
     {
-        preg_match($currentUrl,  $url, $matches);
-        if(!empty($matches)) {
-            unset($matches[0]);
-            if(!$matches) {
-                $matches[] = null;
-            }
-            return $matches;
-        }
-
-        return null;
+        preg_match($this->addPregBorders($currentUrl), $url, $matches);
+        unset($matches[0]);
+        return $matches;
     }
 
-    private function call(mixed $route, mixed $params): string
+    private function call(mixed $route, array $params): string
     {
         return call_user_func_array([new $route['class'], $route['method']], $params);
+    }
+
+    private function addPregBorders(string $pattern): string
+    {
+        return '#^' . $pattern . '$#';
     }
 }
