@@ -19,4 +19,9 @@ class RouterTest extends TestCase
         $this->assertEquals($router->findCallback('/fl/test', 'GET'), [[Controller::class, 'show'], []]);
         $this->assertEquals($router->findCallback('/abacabadaba/test', 'GET'), []);
     }
+
+    public function test_feature(){
+        $request = new Request();
+        echo $request->normalizeUrl('abacaba/abaca/{dd}/{bb}/aba/?afa=fdd/');
+    }
 }

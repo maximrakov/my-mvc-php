@@ -14,55 +14,58 @@ class Router
 
     public function get($path, $callback): void
     {
-        $handledPathAndUrlArgs = $this->handlePatternArguments($path);
-        $this->routes['GET'][$handledPathAndUrlArgs[0]] = [$callback, $handledPathAndUrlArgs[1]];
+        $this->addRoute('GET', $path, $callback);
     }
 
-    public function handlePatternArguments($path): array
+    public function post($path, $callback): void
     {
-        preg_match_all('/\{(\w+)\}/', $path, $urlArguments); // находим url аргументы
-        $blockNumbers = [];
-        foreach ($urlArguments[0] as $urlArgument) { // проходимся по url аргументам
-            $argPosition = strpos($path, $urlArgument); // ищем индекс вхождения первого аргумента
-            $blockNumbers[] = substr_count($path, '/', 0, $argPosition) - 1; // добавляем номер url-блока в котором находится текущий url - аргумент
-            $path = str_replace($urlArgument, '\w+', $path); // заменяем url-аргмента на w+ для валидной регулярки
-        }
-        return [$path, $blockNumbers];
+        $this->addRoute('POST', $path, $callback);
     }
 
-    public function post($path, $callback)
+    private function addRoute($method, $path, $callback): void
     {
-        $handeledPathAndUrlArgs = $this->handlePatternArguments($path);
-        $this->routes['POST'][$handeledPathAndUrlArgs[0]] = [$callback, $handeledPathAndUrlArgs[1]];
+        $this->routes[$method][] = [
+            'url' => $this->request->normalizeUrl($path),
+            'class' => $callback[0],
+            'method' => $callback[1],
+        ];
     }
 
-    public function resolve()
+    public function resolve(): int|bool
     {
         $path = $this->request->getPath(); // получаем путь текущего реквеста
         $method = $this->request->getMethod(); // получаем метод текущего реквеста
-
-        $callback = $this->findCallback($path, $method); // ищем колбэк по методу и пути
-        if (count($callback) == 0) { // если колбэк по реквусту не нашли, отдаем 404
-            http_response_code(404);
-        }
-
-        $callback[0][0] = new $callback[0][0](); // создаем экземпляр контроллера
-
-        echo call_user_func_array($callback[0], $callback[1]); // вызываем метод с аргументами
-    }
-
-    public function findCallback($path, $method)
-    {
-        foreach ($this->routes[$method] as $pattern => $callbackAndArgs) { // проходимся по url-паттернам
-            if (preg_match($pattern, $path)) { // смотрим матчится ли текущий паттерн с url-путем
-                $urlBlocks = explode('/', $path); // разбиваем url на url-блоки
-                $args = [];
-                foreach ($callbackAndArgs[1] as $urlBlockNumber) {
-                    $args[] = $urlBlocks[$urlBlockNumber]; // добавляем значение url-аргумента
-                }
-                return [$callbackAndArgs[0], $args];
+        foreach($this->routes[$method] as $route) {
+            $url = $this->replacePatterns($route['url']);
+            if(($params = $this->matchUrl($url, $path))) {
+                echo $this->call($route, $params);
             }
         }
-        return [];
+
+        return http_response_code(404);
+   }
+
+    private function replacePatterns(mixed $url): string
+    {
+        return preg_replace('/{.+?}/', '(.+?)', $url);
+    }
+
+    private function matchUrl(string $currentUrl, string $url): array|null
+    {
+        preg_match($currentUrl,  $url, $matches);
+        if(!empty($matches)) {
+            unset($matches[0]);
+            if(!$matches) {
+                $matches[] = null;
+            }
+            return $matches;
+        }
+
+        return null;
+    }
+
+    private function call(mixed $route, mixed $params): string
+    {
+        return call_user_func_array([new $route['class'], $route['method']], $params);
     }
 }
