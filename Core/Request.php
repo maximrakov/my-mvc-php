@@ -21,7 +21,8 @@ class Request
         return $this->headers;
     }
 
-    public function getHeader($key) {
+    public function getHeader($key)
+    {
         return $this->getHeaders()[$key];
     }
 

@@ -11,25 +11,14 @@ abstract class Model
     protected $incremeting = true;
     protected $fillable = [];
 
+    protected $id;
+
     public function save()
     {
-        $fields = DB::getFields($this->table);
-        $query = "insert into $this->table (";
-        foreach ($fields as $field) {
-            $query .= $field . ', ';
-        }
         $this->id = $this->getNextId();
-        $query = substr($query, 0, -2);
-        $query .= ") VALUES (";
-        $fieldValues = [];
-        foreach ($fields as $field) {
-            $fieldValues[] = $this->$field;
-            $query .= '?, ';
-        }
-        $query = substr($query, 0, -2);
-        $query .= ')';
-        print_r($query);
-
+        $fields = DB::getFields($this->table);
+        $query = $this->buildInsertQuery($fields);
+        $fieldValues = $this->getFieldValues($fields);
         DB::insert($query, $fieldValues);
     }
 
@@ -45,27 +34,58 @@ abstract class Model
         return DB::select($query);
     }
 
-    public function delete() {
+    public function delete()
+    {
         $query = "DELETE FROM $this->table WHERE id=$this->id";
     }
 
-    public function update() {
+    public function update()
+    {
         $fields = DB::getFields($this->table);
+        $query = $this->buildUpdateQuery($fields);
+        $fieldValues = $this->getFieldValues($fields);
+        DB::update($query, $fieldValues);
+    }
+
+    private function buildInsertQuery($fields): string
+    {
+        $query = "insert into $this->table (";
+        foreach ($fields as $field) {
+            $query .= $field . ', ';
+        }
+        $query = substr($query, 0, -2);
+        $query .= ") VALUES (";
+        foreach ($fields as $field) {
+            $query .= '?, ';
+        }
+        $query = substr($query, 0, -2);
+        $query .= ')';
+        return $query;
+    }
+
+    public function buildUpdateQuery($fields): string
+    {
         $query = "UPDATE $this->table SET ";
         foreach ($fields as $field) {
             $query .= $field . ' = ?, ';
         }
         $query = substr($query, 0, -2);
         $query .= " WHERE id=$this->id";
+        $query = substr($query, 0, -2);
+        $query .= ')';
+        return $query;
+    }
+
+    public function getFieldValues($fields): array
+    {
         $fieldValues = [];
         foreach ($fields as $field) {
             $fieldValues[] = $this->$field;
         }
-        $query = substr($query, 0, -2);
-        $query .= ')';
-        DB::update($query, $fieldValues);
+        return $fieldValues;
     }
-    private function getNextId()
+
+    private function getNextId(): ?int
     {
         return count(DB::select("select * from $this->table")) + 1;
     }

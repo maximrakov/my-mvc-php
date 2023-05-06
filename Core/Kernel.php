@@ -15,7 +15,6 @@ class Kernel
     {
         foreach (static::$globalMiddlewares as $middleware) {
             $middlewareInstance = new $middleware;
-//            dd($middlewareInstance);
             $request = call_user_func([$middlewareInstance, 'handle'], $request, $response);
         }
         return $request;
