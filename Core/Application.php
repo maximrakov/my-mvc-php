@@ -8,15 +8,22 @@ class Application
     public Request $request;
     public Response $response;
 
+    private static Container $container;
+
     public function __construct()
     {
-        $this->response = new Response();
-        $this->request = new Request();
-        $this->router = new Router($this->request, $this->response);
+        static::$container = new Container();
+        static::$container->set(Request::class, new Request());
+        static::$container->set(Response::class, new Response());
+        static::$container->set(Router::class,
+            new Router(static::$container->get(Request::class),
+                static::$container->get(Response::class)
+            )
+        );
     }
 
     public function run()
     {
-        $this->router->resolve(); // запускаем поиск колбэка по реквесту
+        static::$container->get(Router::class)->resolve(); // запускаем поиск колбэка по реквесту
     }
 }

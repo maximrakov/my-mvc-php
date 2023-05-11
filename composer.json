@@ -23,6 +23,7 @@
   },
   "require": {
     "ext-mysqli": "*",
-    "ext-pdo": "*"
+    "ext-pdo": "*",
+    "psr/container": "^2.0"
   }
 }
