@@ -8,6 +8,7 @@ use Psr\Container\ContainerInterface;
 class Container implements ContainerInterface
 {
     private array $entries = [];
+    private static $instance;
 
     public function get(string $id)
     {
@@ -25,5 +26,14 @@ class Container implements ContainerInterface
     public function set($id, $obj)
     {
         $this->entries[$id] = $obj;
+    }
+
+    public static function setInstance(Container $container)
+    {
+        static::$instance = $container;
+    }
+
+    public static function getInstance() {
+        return static::$instance;
     }
 }

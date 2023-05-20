@@ -2,21 +2,30 @@
 
 namespace App\Core;
 
-use App\Core\Middlewares\CORSMiddleware;
 use App\Core\Middlewares\TrustedHostsMiddleware;
 
 class Kernel
 {
-    protected static $globalMiddlewares = [
-        CORSMiddleware::class
-    ];
+    protected $middleware = [];
 
-    public static function runGlobalMiddlewares($request, $response)
+    public function handle()
     {
-        foreach (static::$globalMiddlewares as $middleware) {
-            $middlewareInstance = new $middleware;
-            $request = call_user_func([$middlewareInstance, 'handle'], $request, $response);
-        }
-        return $request;
+        $this->sendRequestThroughRouter();
+    }
+
+    public function sendRequestThroughRouter()
+    {
+        $request = app()->get(Request::class);
+        $this->sendRequestThroughMiddlewares($request);
+        app()->get(Router::class)
+            ->resolve();
+    }
+
+    public function sendRequestThroughMiddlewares($request)
+    {
+        $pipeline = new Pipeline();
+        $pipeline->setPassable($request);
+        $pipeline->setPipes($this->middleware);
+        $pipeline->throughPipes();
     }
 }

@@ -40,6 +40,7 @@ abstract class Model
     }
 
     public function update()
+
     {
         $fields = DB::getFields($this->table);
         $query = $this->buildUpdateQuery($fields);
