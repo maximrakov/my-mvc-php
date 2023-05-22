@@ -7,5 +7,5 @@ use App\Core\Response;
 
 interface Middleware
 {
-    public function handle(Request $request, Response $response);
+    public function handle($request);
 }

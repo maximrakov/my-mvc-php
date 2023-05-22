@@ -2,21 +2,22 @@
 
 namespace App\Core;
 
-class Application
+class Application extends Container
 {
-    public Router $router;
-    public Request $request;
-    public Response $response;
-
     public function __construct()
     {
-        $this->response = new Response();
-        $this->request = new Request();
-        $this->router = new Router($this->request, $this->response);
+        static::setInstance($this);
+        $this->registerBaseBindings();
     }
 
-    public function run()
+    public function registerBaseBindings(): void
     {
-        $this->router->resolve(); // запускаем поиск колбэка по реквесту
+        $this->set(Request::class, new Request());
+        $this->set(Response::class, new Response());
+        $this->set(Router::class,
+            new Router($this->get(Request::class),
+                $this->get(Response::class)
+            )
+        );
     }
 }

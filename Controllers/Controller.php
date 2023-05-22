@@ -2,13 +2,13 @@
 
 namespace App\Controllers;
 
+use App\Core\Database\DB;
+use App\Core\View;
+
 class Controller
 {
     public function view($view, $parameters)
     {
-        foreach ($parameters as $key => $value) {
-            $$key = $value;
-        }
-        include_once "../views/$view.php";
+        View::make($view, $parameters);
     }
 }

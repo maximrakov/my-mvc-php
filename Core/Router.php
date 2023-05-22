@@ -24,25 +24,11 @@ class Router
         foreach ($routes[$method] as $route) {
             $url = $this->replacePatterns($route['url']);
             if (preg_match($this->addPregBorders($url), $path)) {
-                if (!$this->callMiddlewares($route['middlewares'])) {
-                    return;
-                }
                 echo $this->call($route, $this->findParameters($url, $path));
                 return;
             }
         }
         $this->response->setStatusCode(404);
-    }
-
-    public function callMiddlewares($middlewares): bool
-    {
-        $this->request = Kernel::runGlobalMiddlewares($this->request, $this->response);
-        foreach ($middlewares as $middleware) {
-            if (!call_user_func([new $middleware, 'handle'], $this->request, $this->response)) {
-                return false;
-            }
-        }
-        return true;
     }
 
     private function replacePatterns(mixed $url): string

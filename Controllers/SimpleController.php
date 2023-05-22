@@ -2,11 +2,15 @@
 
 namespace App\Controllers;
 
+use App\Core\Database\DB;
+use App\Core\Database\User;
+use App\Core\View;
+
 class SimpleController extends Controller
 {
     public function index($param)
     {
-        $this->view('home', ['name' => $param]);
+        View::make('home', ['name' => 'ivan']);
         return $param;
     }
 
