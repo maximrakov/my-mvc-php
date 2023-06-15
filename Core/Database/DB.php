@@ -2,6 +2,7 @@
 
 namespace App\Core\Database;
 
+use App\Core\Config;
 use PDO;
 
 class DB
@@ -10,9 +11,8 @@ class DB
 
     private static function initConnection(): void
     {
-        $dbConfig = require_once (__DIR__ . '/../../config/database.php');
-        $dbConfig = $dbConfig['connections'];
-        $dsn = "mysql:host={$dbConfig['host']};dbname={$dbConfig['database']};charset=utf8";
+        $dbConfig = Config::get('database.connections');
+        $dsn = "{$dbConfig['driver']}:host={$dbConfig['host']};dbname={$dbConfig['database']};charset=utf8";
         $opt = [
             PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
             PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
@@ -49,19 +49,9 @@ class DB
         $statement = static::execute($sql, $params);
     }
 
-    public static function getFields($tableName) {
-        $statement = static::execute("SHOW COLUMNS FROM my_db.$tableName");
-        $fieldInfo = $statement->fetchAll(PDO::FETCH_ASSOC);
-        $fieldNames = [];
-        foreach ($fieldInfo as $value) {
-            $fieldNames[] = $value['Field'];
-        }
-        return $fieldNames;
-    }
-
     private static function execute($sql, $params = [])
     {
-        if(!static::$link) {
+        if (!static::$link) {
             static::initConnection();
         }
         $statement = static::$link->prepare($sql);
