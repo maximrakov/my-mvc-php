@@ -10,53 +10,84 @@ abstract class Model
     protected $keyType = 'int';
     protected $incremeting = true;
     protected $fillable = [];
-
+    protected $attributes = [];
     protected $id;
+
+    public function __construct($data = [])
+    {
+        foreach ($data as $key => $value) {
+            $this->attributes[$key] = $value;
+        }
+    }
+
+    public function __get($property)
+    {
+        if (in_array($property, $this->fillable)) {
+            return $this->attributes[$property];
+        }
+        return null;
+    }
+
+    public function __set($property, $value)
+    {
+        if (in_array($property, $this->fillable)) {
+            $this->attributes[$property] = $value;
+        }
+    }
 
     public function save()
     {
-        $this->id = $this->getNextId();
-        $fields = DB::getFields($this->table);
-        $query = $this->buildInsertQuery($fields);
-        $fieldValues = $this->getFieldValues($fields);
+        $query = $this->buildInsertQuery();
+        $fieldValues = [];
+        foreach ($this->fillable as $field) {
+            $fieldValues[] = $this->attributes[$field];
+        }
         DB::insert($query, $fieldValues);
     }
 
     public function find($id)
     {
-        $query = "select * from $this->table where id=$id";
-        return DB::select($query);
+        $query = "SELECT * FROM $this->table WHERE id=$id";
+        $arg = DB::select($query)[0];
+        return $this->getModelFromAttributesArray($arg);
+
     }
 
     public function findAll()
     {
-        $query = "select * from $this->table";
-        return DB::select($query);
+        $query = "SELECT * FROM $this->table";
+        $models = DB::select($query);
+        $modelArray = [];
+        foreach ($models as $model) {
+            $modelArray[] = $this->getModelFromAttributesArray($model);
+        }
+        return $modelArray;
     }
 
     public function delete()
     {
-        $query = "DELETE FROM $this->table WHERE id=$this->id";
+//        print_r($this->retrieveId());
+        $query = "DELETE FROM $this->table WHERE id={$this->retrieveId()}";
+//        dd($query);
+        DB::delete($query);
     }
 
-    public function update()
-
+    public function update($attributes)
     {
-        $fields = DB::getFields($this->table);
-        $query = $this->buildUpdateQuery($fields);
-        $fieldValues = $this->getFieldValues($fields);
+        $query = $this->buildUpdateQuery(array_keys($attributes));
+        $fieldValues = array_values($attributes);
         DB::update($query, $fieldValues);
     }
 
-    private function buildInsertQuery($fields): string
+    private function buildInsertQuery(): string
     {
-        $query = "insert into $this->table (";
-        foreach ($fields as $field) {
+        $query = "INSERT INTO $this->table (";
+        foreach ($this->fillable as $field) {
             $query .= $field . ', ';
         }
         $query = substr($query, 0, -2);
         $query .= ") VALUES (";
-        foreach ($fields as $field) {
+        foreach ($this->fillable as $field) {
             $query .= '?, ';
         }
         $query = substr($query, 0, -2);
@@ -64,30 +95,37 @@ abstract class Model
         return $query;
     }
 
-    public function buildUpdateQuery($fields): string
+    public function buildUpdateQuery($attributeNames): string
     {
         $query = "UPDATE $this->table SET ";
-        foreach ($fields as $field) {
+        foreach ($attributeNames as $field) {
             $query .= $field . ' = ?, ';
         }
         $query = substr($query, 0, -2);
-        $query .= " WHERE id=$this->id";
-        $query = substr($query, 0, -2);
-        $query .= ')';
+        $id = $this->retrieveId();
+        $query .= " WHERE id={$id}";
+        print_r($query);
         return $query;
     }
 
-    public function getFieldValues($fields): array
+    public function retrieveId()
     {
-        $fieldValues = [];
-        foreach ($fields as $field) {
-            $fieldValues[] = $this->$field;
+        $id = $this->attributes['id'];
+        if($id !== null) {
+            return $id;
         }
-        return $fieldValues;
+        $whereConstruction = '';
+        foreach ($this->fillable as $field) {
+            $whereConstruction .= "$field = '{$this->attributes[$field]}' and ";
+        }
+        $whereConstruction = substr($whereConstruction, 0, -5);
+        $query = "SELECT * FROM WHERE $whereConstruction";
+        return DB::select($query)['id'];
     }
 
-    private function getNextId(): ?int
+    public function getModelFromAttributesArray($arg)
     {
-        return count(DB::select("select * from $this->table")) + 1;
+        $modelCreation = "return new " . get_class($this) . "(\$arg);";
+        return eval($modelCreation);
     }
 }

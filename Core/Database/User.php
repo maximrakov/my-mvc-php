@@ -4,6 +4,6 @@ namespace App\Core\Database;
 
 class User extends Model
 {
-    protected $name = 'aba';
-    protected $table = 'users';
+    protected $table = 'user';
+    protected $fillable = ['name', 'email', 'password'];
 }
